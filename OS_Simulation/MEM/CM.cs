@@ -63,7 +63,7 @@ namespace OS_Simulation.MEM
         // TODO: Tempo de Relocacao
         public int TempoDeRelocacao(Programa programa)
         {
-            return 1 * programa.MemoriaNecessaria;
+            return (int)Math.Ceiling(0.1 * programa.MemoriaNecessaria);
         }
     }
 }

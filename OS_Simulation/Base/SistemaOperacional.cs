@@ -109,12 +109,13 @@ namespace OS_Simulation.Base
                 Eventos.Remove(evento);
 
                 InstanteDeSimulacao = evento.Value.InstanteChegada;
+
+                RotinasTratamento[evento.Value.Tipo](evento.Value);
+
                 Console.WriteLine(String.Format("Instante {0} | Evento {1} | Programa {2}", InstanteDeSimulacao, evento.Value.Tipo, evento.Value.Programa.Identificador));
                 Console.WriteLine("\t" + CM.Status());
                 Console.WriteLine("\t" + CPU.Status());
                 Console.WriteLine("\t" + Disk.Status());
-
-                RotinasTratamento[evento.Value.Tipo](evento.Value);
 
                 return true;
             }
