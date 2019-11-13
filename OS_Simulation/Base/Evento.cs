@@ -11,6 +11,5 @@ namespace OS_Simulation
         public int Prioridade { get; set; }
         public string Tarefa { get; set; }
         public object Conteudo { get; set; }
-
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace OS_Simulation
 {
@@ -6,6 +7,16 @@ namespace OS_Simulation
     {
         static void Main(string[] args)
         {
+            int instanteInicialSimulacao = 0;
+            int instanteFinalSimulacao = 99;
+            List<Programa> programas = new List<Programa>(){
+                new Programa(){TempoProcessamento=10, MemoriaNecessaria=256, OperacoesIO=2 }
+            };
+
+            // Inicializa Dispositivos e Entradas
+
+            // 
+
             /* Entradas do Simulador
              *  
              *  - Instante Inicial de Simulação
