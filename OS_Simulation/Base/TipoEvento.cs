@@ -2,12 +2,12 @@
 {
     public enum TipoEvento
     {
-        ARRIVAL,
-        REQUEST_CM,
-        REQUEST_CPU,
-        REQUEST_DISK,
-        RELEASE_DISK,
-        RELEASE_CM_CPU,
-        COMPLETION
+        ARRIVAL,        // 1
+        REQUEST_CM,     // 2
+        REQUEST_CPU,    // 3
+        REQUEST_DISK,   // 4
+        RELEASE_DISK,   // 5
+        RELEASE_CM_CPU, // 6
+        COMPLETION      // 7
     };
 }
