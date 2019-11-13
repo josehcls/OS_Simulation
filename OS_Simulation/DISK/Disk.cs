@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Linq;
 
 namespace OS_Simulation.DISK
 {
@@ -27,7 +27,7 @@ namespace OS_Simulation.DISK
 
         public string Status()
         {
-            Programa proximoPrograma = Fila.Peek();
+            Programa proximoPrograma = Fila.Any() ? Fila.Peek() : null;
             int programasEmFila = Fila.Count;
             return String.Format("Disk: {0} - Fila: {1} programa(s), proximo: {2}",
                 Ocupado ? "Ocupado" : "Livre",

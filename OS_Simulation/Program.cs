@@ -1,4 +1,5 @@
-﻿using System;
+﻿using OS_Simulation.Base;
+using System;
 using System.Collections.Generic;
 
 namespace OS_Simulation
@@ -7,13 +8,35 @@ namespace OS_Simulation
     {
         static void Main(string[] args)
         {
-            int instanteInicialSimulacao = 0;
-            int instanteFinalSimulacao = 99;
-            List<Programa> programas = new List<Programa>(){
-                new Programa(){TempoProcessamento=10, MemoriaNecessaria=256, OperacoesIO=2 }
-            };
+            SistemaOperacional sistemaOperacional = new SistemaOperacional(
+                new List<ChegadaPrograma>()
+                { 
+                    new ChegadaPrograma() {
+                        InstanteChegada = 4, 
+                        Programa = new Programa()
+                        {
+                            Identificador="1",
+                            MemoriaNecessaria=300,
+                            TempoProcessamento=20,
+                            OperacoesIO=1                     
+                        }
+                    },
+                    new ChegadaPrograma() {
+                        InstanteChegada = 10, 
+                        Programa = new Programa()
+                        {
+                            Identificador="2",
+                            MemoriaNecessaria=800,
+                            TempoProcessamento=20,
+                            OperacoesIO=1
+                            }
+                        }
+                    }
 
-            // Inicializa Dispositivos e Entradas
+            );
+
+            sistemaOperacional.Simulacao();
+
 
             // 
 

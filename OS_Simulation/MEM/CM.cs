@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Linq;
 
 namespace OS_Simulation.MEM
 {
@@ -31,7 +31,7 @@ namespace OS_Simulation.MEM
 
         public string Status()
         {
-            Programa proximoPrograma = Fila.Peek();
+            Programa proximoPrograma = Fila.Any() ? Fila.Peek() : null;
             int programasEmFila = Fila.Count;
             return String.Format("CM: {0}/{1} - Fila: {2} programa(s), proximo: {3}",
                 MemoriaAlocada,
@@ -41,9 +41,9 @@ namespace OS_Simulation.MEM
             );
         }       
 
-        public bool TemMemoriaDisponivel(Programa programa)
+        public int MemoriaDisponivel()
         {
-            return MemoriaTotal - MemoriaAlocada >= programa.MemoriaNecessaria;
+            return MemoriaTotal - MemoriaAlocada;
         }
 
         public void Reservar(Programa programa)
