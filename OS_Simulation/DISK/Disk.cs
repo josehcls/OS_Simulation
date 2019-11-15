@@ -22,7 +22,10 @@ namespace OS_Simulation.DISK
 
         public Programa Avancar()
         {
-            return Fila.Dequeue();
+            if (Fila.Any())
+                return Fila.Dequeue();
+            else
+                return null;
         }
 
         public string Status()

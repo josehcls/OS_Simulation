@@ -33,6 +33,7 @@ namespace OS_Simulation.Base
             RotinasTratamento.Add(TipoEvento.ARRIVAL, new Action<Evento>(Arrival));
             RotinasTratamento.Add(TipoEvento.REQUEST_CM, new Action<Evento>(RequestCM));
             RotinasTratamento.Add(TipoEvento.REQUEST_CPU, new Action<Evento>(RequestCPU));
+            RotinasTratamento.Add(TipoEvento.RELEASE_CPU_REQUEST_DISK, new Action<Evento>(ReleaseCPURequestDisk));
             RotinasTratamento.Add(TipoEvento.REQUEST_DISK, new Action<Evento>(RequestDisk));
             RotinasTratamento.Add(TipoEvento.RELEASE_DISK, new Action<Evento>(ReleaseDisk));
             RotinasTratamento.Add(TipoEvento.RELEASE_CM_CPU, new Action<Evento>(ReleaseCMCPU));
@@ -92,6 +93,7 @@ namespace OS_Simulation.Base
                     Eventos.AddAfter(ev, evento);
                     break;
                 }
+                ev = ev.Next;
             }
         }
 
@@ -127,6 +129,8 @@ namespace OS_Simulation.Base
         }
 
         #region Rotinas de Tratamento
+
+        // Evento 1
         public void Arrival(Evento evento)
         {
             // Sample Job Mix Distributions
@@ -143,6 +147,7 @@ namespace OS_Simulation.Base
             return;
         }
 
+        // Evento 2
         private void RequestCM(Evento evento)
         {
             Programa programa = evento.Programa;
@@ -166,6 +171,7 @@ namespace OS_Simulation.Base
             }
         }
 
+        // Evento 3
         private void RequestCPU(Evento evento)
         {
             Programa programa = evento.Programa;
@@ -181,7 +187,7 @@ namespace OS_Simulation.Base
                 if (programa.OperacoesIO == 0)
                 {
                     Evento proximoEvento = new Evento(InstanteDeSimulacao,
-                        TipoEvento.COMPLETION,
+                        TipoEvento.RELEASE_CM_CPU,
                         programa);
 
                     AdicionarEvento(proximoEvento);
@@ -191,7 +197,7 @@ namespace OS_Simulation.Base
                     int tempoProcessamento = CPU.TempoDeProcessamento(programa);
                     programa.OperacoesIO -= 1;
                     Evento proximoEvento = new Evento(InstanteDeSimulacao + tempoProcessamento,
-                        TipoEvento.REQUEST_DISK,
+                        TipoEvento.RELEASE_CPU_REQUEST_DISK,
                         programa);
 
                     AdicionarEvento(proximoEvento);
@@ -200,15 +206,15 @@ namespace OS_Simulation.Base
             }
         }
 
-        private void RequestDisk(Evento evento)
+        // Evento 4
+        private void ReleaseCPURequestDisk(Evento evento)
         {
             Programa programa = evento.Programa;
-            CPU.Liberar(programa);
-            CPU.Avancar();
+            LiberarCPU(programa);
 
             // TODO: Overhead Time
             Evento proximoEvento = new Evento(evento.InstanteChegada + 1,
-                TipoEvento.RELEASE_DISK,
+                TipoEvento.REQUEST_DISK,
                 programa);
 
             AdicionarEvento(proximoEvento);
@@ -216,20 +222,97 @@ namespace OS_Simulation.Base
             return;
         }
 
-        private void ReleaseDisk(Evento obj)
+        // Evento 5
+        private void RequestDisk(Evento evento)
         {
-            throw new NotImplementedException();
+            Programa programa = evento.Programa;
+            if (Disk.EstaOcupado())
+            {
+                Disk.Inserir(programa);
+
+                return;
+            }
+            else
+            {
+                Disk.Reservar(programa);
+                int tempoOperacao = Disk.TempoDeOperacao(programa);
+
+                Evento proximoEvento = new Evento(InstanteDeSimulacao + tempoOperacao,
+                    TipoEvento.RELEASE_DISK,
+                    programa);
+                AdicionarEvento(proximoEvento);
+
+                return;
+            }
         }
 
-        private void ReleaseCMCPU(Evento obj)
+        // Evento 6
+        private void ReleaseDisk (Evento evento)
         {
-            throw new NotImplementedException();
+            Programa programa = evento.Programa;
+            LiberarDisco(programa);
+
+            // TODO: Overhead Time
+            Evento proximoEvento = new Evento(evento.InstanteChegada + 1,
+                TipoEvento.REQUEST_CPU,
+                programa);
+
+            AdicionarEvento(proximoEvento);
+
+            return;
         }
 
-        private void Completion(Evento obj)
+        // Evento 7
+        private void ReleaseCMCPU(Evento evento)
         {
+            Programa programa = evento.Programa;
+            LiberarCPU(programa);
+            LiberarMemoria(programa);
+
+            // TODO: Estatisticas do Programa
+
+            // TODO? Release JobTable Space
+        }
+
+        // Evento 8
+        private void Completion (Evento evento)
+        {
+            // TODO: Completion como novo evento (2/4)
             throw new NotImplementedException();
         }
+        #endregion
+
+        #region Funções Auxiliares
+        private void LiberarCPU(Programa programa)
+        {
+            CPU.Liberar(programa);
+            Programa proximoPrograma = CPU.Avancar();
+            if (proximoPrograma != null)
+            {
+                AdicionarEvento(new Evento(InstanteDeSimulacao, TipoEvento.REQUEST_CPU, proximoPrograma));
+            }
+        }
+
+        private void LiberarDisco(Programa programa)
+        {
+            Disk.Liberar(programa);
+            Programa proximoPrograma = Disk.Avancar();
+            if (proximoPrograma != null)
+            {
+                AdicionarEvento(new Evento(InstanteDeSimulacao, TipoEvento.REQUEST_DISK, proximoPrograma));
+            }
+        }
+
+        private void LiberarMemoria(Programa programa)
+        {
+            CM.Liberar(programa);
+            Programa proximoPrograma = CM.Avancar();
+            if (proximoPrograma != null)
+            {
+                AdicionarEvento(new Evento(InstanteDeSimulacao, TipoEvento.REQUEST_CM, proximoPrograma));
+            }
+        }
+
         #endregion
     }
 }

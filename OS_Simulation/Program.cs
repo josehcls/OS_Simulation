@@ -29,10 +29,19 @@ namespace OS_Simulation
                             MemoriaNecessaria=800,
                             TempoProcessamento=20,
                             OperacoesIO=1
+                        }
+                    },
+                    new ChegadaPrograma() {
+                        InstanteChegada = 20, 
+                        Programa = new Programa()
+                        {
+                            Identificador="3",
+                            MemoriaNecessaria=100,
+                            TempoProcessamento=5,
+                            OperacoesIO=5
                             }
                         }
                     }
-
             );
 
             sistemaOperacional.Simulacao();
