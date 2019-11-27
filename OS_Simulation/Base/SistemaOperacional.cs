@@ -18,28 +18,30 @@ namespace OS_Simulation.Base
         public int InicioSimulacao { get; set; }
         public int FimSimulacao { get; set; }
         public Dictionary<TipoEvento, Action<Evento>> RotinasTratamento;
+        public int NivelLog { get; set; }
 
-
-        public SistemaOperacional(List<ChegadaPrograma> chegadaProgramas, int inicioSimulacao = 0, int fimSimulacao = -1)
+        public SistemaOperacional(List<ChegadaPrograma> chegadaProgramas, int inicioSimulacao = 0, int fimSimulacao = -1, int nivelLog = 0)
         {
             FilaProgramas = new Queue<ChegadaPrograma>(chegadaProgramas.OrderBy(c => c.InstanteChegada));
             InicioSimulacao = inicioSimulacao;
-            FimSimulacao = FimSimulacao;
+            FimSimulacao = fimSimulacao;
+            NivelLog = nivelLog;
 
             Eventos = new LinkedList<Evento>();
             InstanteDeSimulacao = 0;
 
-            RotinasTratamento = new Dictionary<TipoEvento, Action<Evento>>();
-            RotinasTratamento.Add(TipoEvento.ARRIVAL, new Action<Evento>(Arrival));
-            RotinasTratamento.Add(TipoEvento.REQUEST_CM, new Action<Evento>(RequestCM));
-            RotinasTratamento.Add(TipoEvento.REQUEST_CPU, new Action<Evento>(RequestCPU));
-            RotinasTratamento.Add(TipoEvento.RELEASE_CPU_REQUEST_DISK, new Action<Evento>(ReleaseCPURequestDisk));
-            RotinasTratamento.Add(TipoEvento.REQUEST_DISK, new Action<Evento>(RequestDisk));
-            RotinasTratamento.Add(TipoEvento.RELEASE_DISK, new Action<Evento>(ReleaseDisk));
-            RotinasTratamento.Add(TipoEvento.RELEASE_CM_CPU, new Action<Evento>(ReleaseCMCPU));
-            RotinasTratamento.Add(TipoEvento.COMPLETION, new Action<Evento>(Completion));
+            RotinasTratamento = new Dictionary<TipoEvento, Action<Evento>>
+            {
+                { TipoEvento.ARRIVAL, new Action<Evento>(Arrival) },
+                { TipoEvento.REQUEST_CM, new Action<Evento>(RequestCM) },
+                { TipoEvento.REQUEST_CPU, new Action<Evento>(RequestCPU) },
+                { TipoEvento.RELEASE_CPU_REQUEST_DISK, new Action<Evento>(ReleaseCPURequestDisk) },
+                { TipoEvento.REQUEST_DISK, new Action<Evento>(RequestDisk) },
+                { TipoEvento.RELEASE_DISK, new Action<Evento>(ReleaseDisk) },
+                { TipoEvento.RELEASE_CM_CPU, new Action<Evento>(ReleaseCMCPU) },
+                { TipoEvento.COMPLETION, new Action<Evento>(Completion) }
+            };
         }
-
 
         public void Simulacao()
         {
@@ -48,6 +50,10 @@ namespace OS_Simulation.Base
             // TODO: Evento Primeiro Programa (1/4)
             ChegadaPrograma primeiroPrograma = ProximoPrograma();
             AgendarPrograma(primeiroPrograma.InstanteChegada, TipoEvento.ARRIVAL, primeiroPrograma.Programa);
+
+            if (FimSimulacao > 0)
+                AgendarPrograma(FimSimulacao, TipoEvento.COMPLETION, new Programa() { Identificador = "SO" });
+
             while (Scheduler()) ;
         }
 
@@ -103,6 +109,7 @@ namespace OS_Simulation.Base
             LinkedListNode<Evento> evento = Eventos.First;
             if (evento == null)
             {
+                // TODO: Evento COMPLETION sem FimSimulação
                 FinalizaSimulacao();
                 return false;
             }
@@ -114,11 +121,6 @@ namespace OS_Simulation.Base
 
                 RotinasTratamento[evento.Value.Tipo](evento.Value);
 
-                Console.WriteLine(String.Format("Instante {0} | Evento {1} | Programa {2}", InstanteDeSimulacao, evento.Value.Tipo, evento.Value.Programa.Identificador));
-                Console.WriteLine("\t" + CM.Status());
-                Console.WriteLine("\t" + CPU.Status());
-                Console.WriteLine("\t" + Disk.Status());
-
                 return true;
             }
         }
@@ -128,37 +130,63 @@ namespace OS_Simulation.Base
             throw new NotImplementedException();
         }
 
+        private void Log(Evento evento, string acao, string resultado)
+        {
+            string log = string.Format("{0};{1};{2};{3};{4}", InstanteDeSimulacao, evento.Tipo, evento.Programa.Identificador, acao, resultado);
+
+            // TODO: Escrever Relatorio de Saida
+
+            if (NivelLog > 0)
+                Console.WriteLine(string.Format("Instante {0} | Evento {1} | Programa {2} | {3}", InstanteDeSimulacao, evento.Tipo, evento.Programa.Identificador, resultado));
+
+            if (NivelLog > 1)
+            {
+                Console.WriteLine("\t" + CM.Status());
+                Console.WriteLine("\t" + CPU.Status());
+                Console.WriteLine("\t" + Disk.Status());
+            }
+
+        }
+
         #region Rotinas de Tratamento
 
         // Evento 1
         public void Arrival(Evento evento)
         {
             // Sample Job Mix Distributions
+            string resultado = "";
 
             // Schedule Next Event
             Evento proximoEvento = new Evento(evento.InstanteChegada, TipoEvento.REQUEST_CM, evento.Programa);
             AdicionarEvento(proximoEvento);
+            resultado += "Chegada do Job. ";
 
             // Schedule Next Job
             ChegadaPrograma proximoPrograma = ProximoPrograma();
             if (proximoPrograma != null)
+            {
                 AgendarPrograma(proximoPrograma.InstanteChegada, TipoEvento.ARRIVAL, proximoPrograma.Programa);
+                resultado += "Agendada chegada do Próximo Job. ";
+            }
 
+            Log(evento, "Arrival", resultado);
             return;
         }
 
         // Evento 2
         private void RequestCM(Evento evento)
         {
+            string resultado = "";
+
             Programa programa = evento.Programa;
             if (evento.Programa.MemoriaNecessaria > CM.MemoriaDisponivel())
             {
+                resultado += "Memória Insuficiente. Job aguardará liberação. ";
                 CM.Inserir(programa);
-
-                return;
             }
             else
             {
+                resultado += "Job Carregado na Memória. ";
                 CM.Reservar(programa);
                 int tempoRelocacao = CM.TempoDeRelocacao(programa);
                 Evento proximoEvento = new Evento(evento.InstanteChegada + tempoRelocacao,
@@ -166,26 +194,30 @@ namespace OS_Simulation.Base
                     programa);
 
                 AdicionarEvento(proximoEvento);
-
-                return;
             }
+
+            Log(evento, "RequestCM", resultado);
+            return;
         }
 
         // Evento 3
         private void RequestCPU(Evento evento)
         {
+            string resultado = "";
+
             Programa programa = evento.Programa;
             if (CPU.EstaOcupado())
             {
+                resultado += "CPU ocupada. Job aguardará liberação. ";
                 CPU.Inserir(programa);
-
-                return;
             }
             else
             {
+                resultado += "CPU livre para processar Job. ";
                 CPU.Reservar(programa);
                 if (programa.OperacoesIO == 0)
                 {
+                    resultado += "Job não demanda mais Operações I/O. ";
                     Evento proximoEvento = new Evento(InstanteDeSimulacao,
                         TipoEvento.RELEASE_CM_CPU,
                         programa);
@@ -194,6 +226,7 @@ namespace OS_Simulation.Base
                 }
                 else
                 {
+                    resultado += "Job ainda demanda Operações I/O. ";
                     int tempoProcessamento = CPU.TempoDeProcessamento(programa);
                     programa.OperacoesIO -= 1;
                     Evento proximoEvento = new Evento(InstanteDeSimulacao + tempoProcessamento,
@@ -202,13 +235,18 @@ namespace OS_Simulation.Base
 
                     AdicionarEvento(proximoEvento);
                 }
-                return;
             }
+
+            Log(evento, "RequestCPU", resultado);
+            return;
         }
 
         // Evento 4
         private void ReleaseCPURequestDisk(Evento evento)
         {
+            string resultado = "";
+            resultado += "CPU liberada. Job solicita Disco. ";
+
             Programa programa = evento.Programa;
             LiberarCPU(programa);
 
@@ -219,21 +257,25 @@ namespace OS_Simulation.Base
 
             AdicionarEvento(proximoEvento);
 
+            Log(evento, "ReleaseCPURequestDisk", resultado);
             return;
         }
 
         // Evento 5
         private void RequestDisk(Evento evento)
         {
+            string resultado = "";
+
             Programa programa = evento.Programa;
             if (Disk.EstaOcupado())
             {
+                resultado += "Disco Ocupado. Job aguardará liberação. ";
                 Disk.Inserir(programa);
-
-                return;
             }
             else
             {
+                resultado += "Disco Livre para Job acessar. ";
+
                 Disk.Reservar(programa);
                 int tempoOperacao = Disk.TempoDeOperacao(programa);
 
@@ -241,14 +283,18 @@ namespace OS_Simulation.Base
                     TipoEvento.RELEASE_DISK,
                     programa);
                 AdicionarEvento(proximoEvento);
-
-                return;
             }
+
+            Log(evento, "RequestDisk", resultado);
+            return;
         }
 
         // Evento 6
         private void ReleaseDisk (Evento evento)
         {
+            string resultado = "";
+            resultado += "Disco liberado. Job solcitará CPU. ";
+
             Programa programa = evento.Programa;
             LiberarDisco(programa);
 
@@ -259,12 +305,15 @@ namespace OS_Simulation.Base
 
             AdicionarEvento(proximoEvento);
 
-            return;
+            Log(evento, "ReleaseDisk", resultado);
         }
 
         // Evento 7
         private void ReleaseCMCPU(Evento evento)
         {
+            string resultado = "";
+            resultado += "Job finalizado, liberando CPU e Memória. ";
+
             Programa programa = evento.Programa;
             LiberarCPU(programa);
             LiberarMemoria(programa);
@@ -272,11 +321,18 @@ namespace OS_Simulation.Base
             // TODO: Estatisticas do Programa
 
             // TODO? Release JobTable Space
+
+            Log(evento, "ReleaseCMCPU", resultado);
         }
 
         // Evento 8
         private void Completion (Evento evento)
         {
+            string resultado = "";
+            resultado += "Fim de Simulação atingido. ";
+
+            Log(evento, "Completion", resultado);
+
             // TODO: Completion como novo evento (2/4)
             throw new NotImplementedException();
         }
