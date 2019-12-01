@@ -17,7 +17,7 @@ namespace OS_Simulation.Base
         public Queue<ChegadaPrograma> FilaProgramas { get; set; }
         public int InicioSimulacao { get; set; }
         public int FimSimulacao { get; set; }
-        public Dictionary<TipoEvento, Action<Evento>> RotinasTratamento;
+        public Dictionary<TipoEvento, Action<Evento>> RotinasTratamento { get; set; };
         public int NivelLog { get; set; }
 
         public SistemaOperacional(List<ChegadaPrograma> chegadaProgramas, int inicioSimulacao = 0, int fimSimulacao = -1, int nivelLog = 0)

@@ -14,7 +14,7 @@ namespace OS_Simulation.Base
         public Evento (int instanteChegada, TipoEvento tipoEvento, Programa programa)
         {
             InstanteChegada = instanteChegada;
-            Tipo= tipoEvento;
+            Tipo = tipoEvento;
             Programa = programa;
         }
     }

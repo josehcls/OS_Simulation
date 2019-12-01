@@ -63,7 +63,8 @@ namespace OS_Simulation.MEM
             Particao particaoLivre = new Particao(particaoPrograma.PosicaoFinal() + 1, maiorParticaoLivre.Value.Tamanho - particaoPrograma.Tamanho);
 
             Particoes.AddBefore(maiorParticaoLivre, particaoPrograma);
-            Particoes.AddAfter(maiorParticaoLivre, particaoLivre);
+            if (particaoLivre.Tamanho > 0)
+                Particoes.AddAfter(maiorParticaoLivre, particaoLivre);
             Particoes.Remove(maiorParticaoLivre);
 
             if (MemoriaAlocada() > MemoriaTotal)
@@ -102,7 +103,7 @@ namespace OS_Simulation.MEM
         // TODO: Tempo de Relocacao
         public int TempoDeRelocacao(Programa programa)
         {
-            return (int)Math.Ceiling(0.1 * programa.MemoriaNecessaria);
+            return (int)Math.Ceiling(0.01 * programa.MemoriaNecessaria);
         }
 
         int MemoriaAlocada()
