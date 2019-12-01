@@ -144,6 +144,7 @@ namespace OS_Simulation.Base
                 Console.WriteLine("\t" + CM.Status());
                 Console.WriteLine("\t" + CPU.Status());
                 Console.WriteLine("\t" + Disk.Status());
+                Console.WriteLine("\n");
             }
 
         }
