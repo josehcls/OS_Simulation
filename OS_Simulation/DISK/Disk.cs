@@ -59,7 +59,7 @@ namespace OS_Simulation.DISK
         // TODO: Tempo de Operacao
         public int TempoDeOperacao(Programa programa)
         {
-            return 10;
+            return 20;
         }
 
     }

@@ -59,6 +59,11 @@ namespace OS_Simulation
         // TODO: Tempo de Processamento / Inter-request Time
         public int TempoDeProcessamento(Programa programa)
         {
+            return programa.TempoProcessamento;
+        }
+
+        public int TempoDeOverhead(Programa programa)
+        {
             return 1;
         }
 
