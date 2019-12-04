@@ -36,13 +36,16 @@ namespace OS_Simulation.MEM
             Programa proximoPrograma = Fila.Any() ? Fila.Peek() : null;
             int programasEmFila = Fila.Count;
             LinkedListNode<Particao> maiorParticaoLivre = MaiorParticaoLivre();
-            return String.Format("CM: {0}/{1} - Maior partição livre: {2} - Fila: {3} programa(s), proximo: {4}",
+            string status = string.Format("CM: {0}/{1} - Maior partição livre: {2} - Fila: {3} programa(s), proximo: {4}",
                 MemoriaAlocada(),
                 MemoriaTotal,
                 maiorParticaoLivre.Value == null ? "-" : maiorParticaoLivre.Value.Tamanho.ToString(),
                 programasEmFila,
                 proximoPrograma != null ? proximoPrograma.Identificador : "-"
-            ); ;
+            );
+            string particoes = "\t\tPartições: | " + string.Join('|', Particoes.Select(p => p.ToString())) + " | "; 
+
+            return status + "\n" + particoes;
         }       
 
         // #### Maior Particao Disponivel ####

@@ -29,5 +29,11 @@ namespace OS_Simulation.MEM
             Programa = null;
             Livre = true;
         }
+
+        override
+        public string ToString()
+        {
+            return string.Format(" {0} : {1} - {2} ", PosicaoInicial, PosicaoFinal(), Livre ? "Livre" : string.Format("Programa {0}", Programa.Identificador));
+        }
     }
 }
